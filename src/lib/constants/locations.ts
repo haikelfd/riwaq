@@ -1,0 +1,28 @@
+import { Location } from '@/lib/types';
+
+export const LOCATIONS: Omit<Location, 'id'>[] = [
+  { name: 'Tunis', name_ar: 'تونس', slug: 'tunis' },
+  { name: 'Ariana', name_ar: 'أريانة', slug: 'ariana' },
+  { name: 'Ben Arous', name_ar: 'بن عروس', slug: 'ben-arous' },
+  { name: 'Manouba', name_ar: 'منوبة', slug: 'manouba' },
+  { name: 'Nabeul', name_ar: 'نابل', slug: 'nabeul' },
+  { name: 'Zaghouan', name_ar: 'زغوان', slug: 'zaghouan' },
+  { name: 'Bizerte', name_ar: 'بنزرت', slug: 'bizerte' },
+  { name: 'Béja', name_ar: 'باجة', slug: 'beja' },
+  { name: 'Jendouba', name_ar: 'جندوبة', slug: 'jendouba' },
+  { name: 'Le Kef', name_ar: 'الكاف', slug: 'le-kef' },
+  { name: 'Siliana', name_ar: 'سليانة', slug: 'siliana' },
+  { name: 'Sousse', name_ar: 'سوسة', slug: 'sousse' },
+  { name: 'Monastir', name_ar: 'المنستير', slug: 'monastir' },
+  { name: 'Mahdia', name_ar: 'المهدية', slug: 'mahdia' },
+  { name: 'Sfax', name_ar: 'صفاقس', slug: 'sfax' },
+  { name: 'Kairouan', name_ar: 'القيروان', slug: 'kairouan' },
+  { name: 'Kasserine', name_ar: 'القصرين', slug: 'kasserine' },
+  { name: 'Sidi Bouzid', name_ar: 'سيدي بوزيد', slug: 'sidi-bouzid' },
+  { name: 'Gabès', name_ar: 'قابس', slug: 'gabes' },
+  { name: 'Médenine', name_ar: 'مدنين', slug: 'medenine' },
+  { name: 'Tataouine', name_ar: 'تطاوين', slug: 'tataouine' },
+  { name: 'Gafsa', name_ar: 'قفصة', slug: 'gafsa' },
+  { name: 'Tozeur', name_ar: 'توزر', slug: 'tozeur' },
+  { name: 'Kébili', name_ar: 'قبلي', slug: 'kebili' },
+];
