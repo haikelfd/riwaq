@@ -3,18 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { updateListing, deleteListing, markListingAsSold, fetchListingByToken } from '@/lib/actions/listings';
+import { updateListing, deleteListing, markListingAsSold } from '@/lib/actions/listings';
 import { Listing, Category, Location, EnergyType } from '@/lib/types';
-import { DEMO_CATEGORIES, DEMO_LOCATIONS, DEMO_LISTINGS } from '@/lib/demo-data';
 import { ENERGY_TYPE_OPTIONS } from '@/lib/constants/energy-types';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
-
-function isDemoMode() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  return !url || url === 'your_supabase_url_here';
-}
 
 export default function ManagePage() {
   const params = useParams();
@@ -48,40 +42,24 @@ export default function ManagePage() {
 
   useEffect(() => {
     async function loadData() {
-      let listingData: Listing | null = null;
-      let cats: Category[] = [];
-      let locs: Location[] = [];
+      const supabase = createClient();
 
-      if (isDemoMode()) {
-        // Check both static demo listings and dynamically created ones via server action
-        listingData = DEMO_LISTINGS.find((l) => l.management_token === token) || null;
+      const { data } = await supabase
+        .from('listings')
+        .select(`*, category:categories(*), location:locations(*), images:listing_images(*)`)
+        .eq('management_token', token)
+        .neq('status', 'deleted')
+        .single();
 
-        if (!listingData) {
-          listingData = await fetchListingByToken(token);
-        }
+      const listingData = data as Listing | null;
 
-        cats = DEMO_CATEGORIES;
-        locs = DEMO_LOCATIONS;
-      } else {
-        const supabase = createClient();
+      const [{ data: catData }, { data: locData }] = await Promise.all([
+        supabase.from('categories').select('*').order('sort_order'),
+        supabase.from('locations').select('*').order('name'),
+      ]);
 
-        const { data } = await supabase
-          .from('listings')
-          .select(`*, category:categories(*), location:locations(*), images:listing_images(*)`)
-          .eq('management_token', token)
-          .neq('status', 'deleted')
-          .single();
-
-        listingData = data as Listing | null;
-
-        const [{ data: catData }, { data: locData }] = await Promise.all([
-          supabase.from('categories').select('*').order('sort_order'),
-          supabase.from('locations').select('*').order('name'),
-        ]);
-
-        cats = (catData as Category[]) || [];
-        locs = (locData as Location[]) || [];
-      }
+      const cats = (catData as Category[]) || [];
+      const locs = (locData as Location[]) || [];
 
       if (!listingData) {
         setLoading(false);

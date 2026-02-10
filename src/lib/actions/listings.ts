@@ -3,8 +3,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { CreateListingData, Listing } from '@/lib/types';
 import { resolveSellerByToken } from '@/lib/actions/sellers';
-import { isDemoMode, DEMO_CATEGORIES, DEMO_LOCATIONS, DEMO_LISTINGS } from '@/lib/demo-data';
-import { addDemoListing, getDemoListingByToken, updateDemoListing } from '@/lib/demo-store';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function createListing(data: CreateListingData): Promise<{
@@ -13,42 +11,6 @@ export async function createListing(data: CreateListingData): Promise<{
   managementToken?: string;
   error?: string;
 }> {
-  if (isDemoMode()) {
-    const listingId = `demo-new-${Date.now()}`;
-    const managementToken = `demo-token-new-${Date.now()}`;
-    const category = DEMO_CATEGORIES.find((c) => c.id === data.category_id);
-    const location = DEMO_LOCATIONS.find((l) => l.id === data.location_id);
-    const now = new Date().toISOString();
-
-    addDemoListing({
-      id: listingId,
-      title: data.title.trim(),
-      description: data.description.trim(),
-      price: data.price ?? null,
-      condition: data.condition,
-      category_id: data.category_id,
-      location_id: data.location_id,
-      phone: data.phone.trim(),
-      seller_name: data.seller_name?.trim() || null,
-      seller_id: data.seller_id || null,
-      brand: data.brand?.trim() || null,
-      model: data.model?.trim() || null,
-      year: data.year || null,
-      energy_type: data.energy_type || null,
-      user_id: data.user_id || null,
-      management_token: managementToken,
-      status: 'active',
-      created_at: now,
-      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      updated_at: now,
-      category: category || undefined,
-      location: location || undefined,
-      images: [],
-    });
-
-    return { success: true, listingId, managementToken };
-  }
-
   const supabase = createAdminClient();
   const managementToken = uuidv4();
 
@@ -97,27 +59,6 @@ export async function updateListing(
   token: string,
   data: Partial<CreateListingData>
 ): Promise<{ success: boolean; error?: string }> {
-  if (isDemoMode()) {
-    const existing = getDemoListingByToken(token) || DEMO_LISTINGS.find((l) => l.management_token === token);
-    if (!existing) return { success: false, error: 'Annonce introuvable ou lien invalide.' };
-
-    const updates: Record<string, unknown> = {};
-    if (data.title !== undefined) updates.title = data.title.trim();
-    if (data.description !== undefined) updates.description = data.description.trim();
-    if (data.price !== undefined) updates.price = data.price;
-    if (data.condition !== undefined) updates.condition = data.condition;
-    if (data.phone !== undefined) updates.phone = data.phone.trim();
-    if (data.seller_name !== undefined) updates.seller_name = data.seller_name?.trim() || null;
-    if (data.brand !== undefined) updates.brand = data.brand?.trim() || null;
-    if (data.model !== undefined) updates.model = data.model?.trim() || null;
-    if (data.year !== undefined) updates.year = data.year || null;
-    if (data.energy_type !== undefined) updates.energy_type = data.energy_type || null;
-    updates.updated_at = new Date().toISOString();
-
-    updateDemoListing(existing.id, updates);
-    return { success: true };
-  }
-
   const supabase = createAdminClient();
 
   // Verify token ownership
@@ -162,13 +103,6 @@ export async function updateListing(
 export async function deleteListing(
   token: string
 ): Promise<{ success: boolean; error?: string }> {
-  if (isDemoMode()) {
-    const existing = getDemoListingByToken(token) || DEMO_LISTINGS.find((l) => l.management_token === token);
-    if (!existing) return { success: false, error: 'Annonce introuvable ou lien invalide.' };
-    updateDemoListing(existing.id, { status: 'deleted' });
-    return { success: true };
-  }
-
   const supabase = createAdminClient();
 
   const { data: existing } = await supabase
@@ -199,13 +133,6 @@ export async function markListingAsSold(
   token: string,
   sold: boolean
 ): Promise<{ success: boolean; error?: string }> {
-  if (isDemoMode()) {
-    const existing = getDemoListingByToken(token) || DEMO_LISTINGS.find((l) => l.management_token === token);
-    if (!existing) return { success: false, error: 'Annonce introuvable ou lien invalide.' };
-    updateDemoListing(existing.id, { status: sold ? 'sold' : 'active' });
-    return { success: true };
-  }
-
   const supabase = createAdminClient();
 
   const { data: existing } = await supabase
@@ -239,11 +166,6 @@ export async function adminUpdateListingStatus(
   status: 'active' | 'deleted' | 'sold',
   adminId: string
 ): Promise<{ success: boolean; error?: string }> {
-  if (isDemoMode()) {
-    updateDemoListing(listingId, { status });
-    return { success: true };
-  }
-
   const supabase = createAdminClient();
 
   const { error: updateError } = await supabase
@@ -267,10 +189,6 @@ export async function adminUpdateListingStatus(
 
 // Server-safe query for client components (avoids importing queries/listings which pulls in next/headers)
 export async function fetchListingByToken(token: string): Promise<Listing | null> {
-  if (isDemoMode()) {
-    return getDemoListingByToken(token) || DEMO_LISTINGS.find((l) => l.management_token === token) || null;
-  }
-
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('listings')

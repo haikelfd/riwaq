@@ -1,11 +1,6 @@
 import { Seller, Listing } from '@/lib/types';
-import { isDemoMode, DEMO_SELLERS, DEMO_LISTINGS } from '@/lib/demo-data';
 
 export async function getSellerById(id: string): Promise<Seller | null> {
-  if (isDemoMode()) {
-    return DEMO_SELLERS.find((s) => s.id === id) || null;
-  }
-
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
 
@@ -24,10 +19,6 @@ export async function getSellerById(id: string): Promise<Seller | null> {
 }
 
 export async function getSellerByToken(token: string): Promise<Seller | null> {
-  if (isDemoMode()) {
-    return DEMO_SELLERS.find((s) => s.management_token === token) || null;
-  }
-
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
 
@@ -46,10 +37,6 @@ export async function getSellerByToken(token: string): Promise<Seller | null> {
 }
 
 export async function getListingsBySellerId(sellerId: string): Promise<Listing[]> {
-  if (isDemoMode()) {
-    return DEMO_LISTINGS.filter((l) => l.seller_id === sellerId);
-  }
-
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
 

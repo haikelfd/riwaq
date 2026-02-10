@@ -1,7 +1,6 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
-import { isDemoMode } from '@/lib/demo-data';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function uploadListingImage(
@@ -9,10 +8,6 @@ export async function uploadListingImage(
   formData: FormData,
   sortOrder: number
 ): Promise<{ success: boolean; imagePath?: string; error?: string }> {
-  if (isDemoMode()) {
-    return { success: true, imagePath: `demo/${listingId}/${sortOrder}.jpg` };
-  }
-
   const supabase = createAdminClient();
   const file = formData.get('file') as File;
 
@@ -63,10 +58,6 @@ export async function deleteListingImage(
   imageId: string,
   storagePath: string
 ): Promise<{ success: boolean; error?: string }> {
-  if (isDemoMode()) {
-    return { success: true };
-  }
-
   const supabase = createAdminClient();
 
   // Delete from storage

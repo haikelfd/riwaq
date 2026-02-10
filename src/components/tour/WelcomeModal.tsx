@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button';
 
 export default function WelcomeModal() {
   const router = useRouter();
-  const { user, profile, markDemoTourSeen } = useAuth();
+  const { user, profile } = useAuth();
   const { startTour } = useTour();
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -29,10 +29,7 @@ export default function WelcomeModal() {
   const handleDismiss = async () => {
     setVisible(false);
     setDismissed(true);
-    const demo = !process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'your_supabase_url_here';
-    if (demo) {
-      markDemoTourSeen();
-    } else if (user?.id) {
+    if (user?.id) {
       await markTourAsSeen(user.id);
     }
   };

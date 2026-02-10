@@ -1,9 +1,6 @@
 import { Category, Location } from '@/lib/types';
-import { isDemoMode, DEMO_CATEGORIES, DEMO_LOCATIONS } from '@/lib/demo-data';
 
 export async function getCategories(): Promise<Category[]> {
-  if (isDemoMode()) return DEMO_CATEGORIES;
-
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
 
@@ -21,8 +18,6 @@ export async function getCategories(): Promise<Category[]> {
 }
 
 export async function getLocations(): Promise<Location[]> {
-  if (isDemoMode()) return DEMO_LOCATIONS;
-
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
 
@@ -40,10 +35,6 @@ export async function getLocations(): Promise<Location[]> {
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  if (isDemoMode()) {
-    return DEMO_CATEGORIES.find((c) => c.slug === slug) || null;
-  }
-
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
 

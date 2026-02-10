@@ -1,14 +1,11 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
-import { isDemoMode } from '@/lib/demo-data';
 
 export async function updateProfile(
   userId: string,
   data: { full_name?: string }
 ): Promise<{ success: boolean; error?: string }> {
-  if (isDemoMode()) return { success: true };
-
   const supabase = createAdminClient();
 
   const updateData: Record<string, unknown> = {};
@@ -30,8 +27,6 @@ export async function updateProfile(
 export async function markTourAsSeen(
   userId: string
 ): Promise<{ success: boolean; error?: string }> {
-  if (isDemoMode()) return { success: true };
-
   const supabase = createAdminClient();
 
   const { error } = await supabase

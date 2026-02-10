@@ -8,11 +8,6 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Link from 'next/link';
 
-function isDemoMode() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  return !url || url === 'your_supabase_url_here';
-}
-
 export default function LoginPage() {
   return (
     <Suspense fallback={<div className="max-w-md mx-auto px-4 py-16 text-center text-slate-500">Chargement...</div>}>
@@ -25,13 +20,11 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/mon-compte';
-  const { user, loading: authLoading, demoSignIn } = useAuth();
-  const demo = isDemoMode();
+  const { user, loading: authLoading } = useAuth();
 
-  const [phase, setPhase] = useState<'phone' | 'otp' | 'name'>('phone');
+  const [phase, setPhase] = useState<'phone' | 'otp'>('phone');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
-  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [cooldown, setCooldown] = useState(0);
@@ -72,15 +65,6 @@ function LoginPageContent() {
     setLoading(true);
     setError('');
 
-    if (demo) {
-      // Simulate OTP sending delay
-      await new Promise((r) => setTimeout(r, 800));
-      setPhase('otp');
-      setCooldown(30);
-      setLoading(false);
-      return;
-    }
-
     try {
       const supabase = createClient();
       const { error: otpError } = await supabase.auth.signInWithOtp({
@@ -111,15 +95,6 @@ function LoginPageContent() {
     setLoading(true);
     setError('');
 
-    if (demo) {
-      // Simulate verification delay
-      await new Promise((r) => setTimeout(r, 600));
-      setLoading(false);
-      // Ask for name before completing demo sign-in
-      setPhase('name');
-      return;
-    }
-
     try {
       const supabase = createClient();
       const { error: verifyError } = await supabase.auth.verifyOtp({
@@ -142,17 +117,10 @@ function LoginPageContent() {
     }
   };
 
-  const handleDemoComplete = () => {
-    demoSignIn(phone, name.trim());
-    router.push(redirect);
-  };
-
   const handleResend = async () => {
     if (cooldown > 0) return;
     setCooldown(30);
     setError('');
-
-    if (demo) return; // In demo mode, just reset cooldown
 
     try {
       const supabase = createClient();
@@ -183,14 +151,6 @@ function LoginPageContent() {
         </p>
       </div>
 
-      {demo && (
-        <div className="bg-brand-50 rounded-xl p-4 mb-6">
-          <p className="text-xs text-brand-600 font-medium text-center">
-            Mode démonstration — le flux est simulé, aucun SMS ne sera envoyé.
-          </p>
-        </div>
-      )}
-
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         {phase === 'phone' ? (
           <div className="space-y-4">
@@ -220,7 +180,7 @@ function LoginPageContent() {
               {loading ? 'Envoi...' : 'Recevoir le code'}
             </Button>
           </div>
-        ) : phase === 'otp' ? (
+        ) : (
           <div className="space-y-4">
             <div className="text-center">
               <p className="text-sm text-slate-600">
@@ -229,11 +189,6 @@ function LoginPageContent() {
                   +216 {formatPhoneDisplay(phone)}
                 </span>
               </p>
-              {demo && (
-                <p className="text-xs text-brand-500 mt-1">
-                  Entrez n&apos;importe quel code à 6 chiffres.
-                </p>
-              )}
             </div>
 
             <Input
@@ -282,34 +237,6 @@ function LoginPageContent() {
             >
               Changer de numéro
             </button>
-          </div>
-        ) : (
-          /* Name step — demo only */
-          <div className="space-y-4">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-accent-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-accent-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <p className="text-sm font-medium text-slate-900 mb-1">
-                Numéro vérifié !
-              </p>
-              <p className="text-xs text-slate-500">
-                Ajoutez votre nom pour finaliser votre compte.
-              </p>
-            </div>
-
-            <Input
-              label="Votre nom (optionnel)"
-              placeholder="Ex: Mohamed"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-
-            <Button fullWidth onClick={handleDemoComplete}>
-              {name.trim() ? 'Terminer' : 'Passer et continuer'}
-            </Button>
           </div>
         )}
       </div>

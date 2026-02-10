@@ -6,19 +6,13 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { updateProfile } from '@/lib/actions/auth';
 import { Listing } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
-import { DEMO_LISTINGS } from '@/lib/demo-data';
 import ListingCard from '@/components/listings/ListingCard';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 
-function isDemoMode() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  return !url || url === 'your_supabase_url_here';
-}
-
 export default function AccountPage() {
   const router = useRouter();
-  const { user, profile, loading: authLoading, signOut, updateDemoProfile } = useAuth();
+  const { user, profile, loading: authLoading, signOut } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loadingListings, setLoadingListings] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -36,13 +30,6 @@ export default function AccountPage() {
   // Load user's listings
   useEffect(() => {
     if (!user) return;
-
-    if (isDemoMode()) {
-      // Show a couple of demo listings as "user's listings"
-      setListings(DEMO_LISTINGS.filter((l) => l.status === 'active').slice(0, 2));
-      setLoadingListings(false);
-      return;
-    }
 
     async function loadListings() {
       const supabase = createClient();
@@ -71,15 +58,6 @@ export default function AccountPage() {
     if (!user) return;
     setSaving(true);
     setMessage('');
-
-    if (isDemoMode()) {
-      await new Promise((r) => setTimeout(r, 300));
-      updateDemoProfile({ full_name: nameInput });
-      setMessage('Profil mis à jour.');
-      setEditing(false);
-      setSaving(false);
-      return;
-    }
 
     const result = await updateProfile(user.id, { full_name: nameInput });
     if (result.success) {

@@ -4,25 +4,13 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Profile } from '@/lib/types';
-import { DEMO_PROFILE } from '@/lib/demo-data';
 import type { User } from '@supabase/supabase-js';
-
-const DEMO_STORAGE_KEY = 'riwaq-demo-auth';
-
-interface DemoAuthState {
-  phone: string;
-  name: string;
-  has_seen_tour: boolean;
-}
 
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
   signOut: () => Promise<void>;
-  demoSignIn: (phone: string, name: string) => void;
-  updateDemoProfile: (data: { full_name?: string }) => void;
-  markDemoTourSeen: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -30,58 +18,10 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   loading: true,
   signOut: async () => {},
-  demoSignIn: () => {},
-  updateDemoProfile: () => {},
-  markDemoTourSeen: () => {},
 });
 
 export function useAuth() {
   return useContext(AuthContext);
-}
-
-function isDemoMode() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  return !url || url === 'your_supabase_url_here';
-}
-
-function getDemoState(): DemoAuthState | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem(DEMO_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function setDemoState(state: DemoAuthState | null) {
-  if (typeof window === 'undefined') return;
-  if (state) {
-    localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(state));
-  } else {
-    localStorage.removeItem(DEMO_STORAGE_KEY);
-  }
-}
-
-function buildDemoUser(phone: string): User {
-  return {
-    id: DEMO_PROFILE.id,
-    phone: `+216${phone}`,
-    aud: 'authenticated',
-    role: 'authenticated',
-    app_metadata: {},
-    user_metadata: {},
-    created_at: DEMO_PROFILE.created_at,
-  } as User;
-}
-
-function buildDemoProfile(phone: string, name: string, hasSeenTour: boolean): Profile {
-  return {
-    ...DEMO_PROFILE,
-    phone,
-    full_name: name || null,
-    has_seen_tour: hasSeenTour,
-  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -91,7 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = useCallback(async (userId: string) => {
-    if (isDemoMode()) return;
     const supabase = createClient();
     const { data } = await supabase
       .from('profiles')
@@ -103,18 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Demo mode: restore session from localStorage
   useEffect(() => {
-    if (isDemoMode()) {
-      const saved = getDemoState();
-      if (saved) {
-        setUser(buildDemoUser(saved.phone));
-        setProfile(buildDemoProfile(saved.phone, saved.name, saved.has_seen_tour));
-      }
-      setLoading(false);
-      return;
-    }
-
     const supabase = createClient();
 
     // Get initial session
@@ -144,40 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [fetchProfile]);
 
-  const demoSignIn = useCallback((phone: string, name: string) => {
-    const state: DemoAuthState = { phone, name, has_seen_tour: false };
-    setDemoState(state);
-    setUser(buildDemoUser(phone));
-    setProfile(buildDemoProfile(phone, name, false));
-  }, []);
-
-  const updateDemoProfile = useCallback((data: { full_name?: string }) => {
-    if (!isDemoMode()) return;
-    const saved = getDemoState();
-    if (!saved) return;
-    const newName = data.full_name !== undefined ? (data.full_name.trim() || '') : saved.name;
-    const newState: DemoAuthState = { ...saved, name: newName };
-    setDemoState(newState);
-    setProfile(buildDemoProfile(newState.phone, newState.name, newState.has_seen_tour));
-  }, []);
-
-  const markDemoTourSeen = useCallback(() => {
-    if (!isDemoMode()) return;
-    const saved = getDemoState();
-    if (!saved) return;
-    const newState: DemoAuthState = { ...saved, has_seen_tour: true };
-    setDemoState(newState);
-    setProfile(buildDemoProfile(newState.phone, newState.name, true));
-  }, []);
-
   const signOut = useCallback(async () => {
-    if (isDemoMode()) {
-      setDemoState(null);
-      setUser(null);
-      setProfile(null);
-      router.push('/');
-      return;
-    }
     const supabase = createClient();
     await supabase.auth.signOut();
     setUser(null);
@@ -186,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut, demoSignIn, updateDemoProfile, markDemoTourSeen }}>
+    <AuthContext.Provider value={{ user, profile, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

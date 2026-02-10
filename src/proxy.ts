@@ -9,8 +9,8 @@ export async function proxy(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Skip auth refresh in demo mode
-  if (!supabaseUrl || supabaseUrl === 'your_supabase_url_here' || !supabaseAnonKey) {
+  // Skip auth refresh if Supabase is not configured
+  if (!supabaseUrl || !supabaseAnonKey) {
     return supabaseResponse;
   }
 

@@ -6,7 +6,6 @@ import { Seller, Listing } from '@/lib/types';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import ListingGrid from '@/components/listings/ListingGrid';
-import { isDemoMode, DEMO_SELLERS, DEMO_LISTINGS } from '@/lib/demo-data';
 
 export default function ProfileManagePage() {
   const params = useParams();
@@ -27,23 +26,6 @@ export default function ProfileManagePage() {
 
   useEffect(() => {
     async function loadData() {
-      if (isDemoMode()) {
-        const demoSeller = DEMO_SELLERS.find((s) => s.management_token === token);
-        if (demoSeller) {
-          setSeller(demoSeller);
-          setFormData({
-            full_name: demoSeller.full_name,
-            phone: demoSeller.phone,
-            email: demoSeller.email || '',
-          });
-          setListings(DEMO_LISTINGS.filter((l) => l.seller_id === demoSeller.id));
-        } else {
-          setError('Profil introuvable ou lien invalide.');
-        }
-        setLoading(false);
-        return;
-      }
-
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
 

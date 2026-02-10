@@ -2,7 +2,6 @@
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { CreateSellerData } from '@/lib/types';
-import { isDemoMode, DEMO_SELLERS } from '@/lib/demo-data';
 
 export async function createSeller(data: CreateSellerData): Promise<{
   success: boolean;
@@ -10,14 +9,6 @@ export async function createSeller(data: CreateSellerData): Promise<{
   managementToken?: string;
   error?: string;
 }> {
-  if (isDemoMode()) {
-    return {
-      success: true,
-      sellerId: 'demo-new-seller',
-      managementToken: 'demo-seller-token-new',
-    };
-  }
-
   const supabase = createAdminClient();
 
   const { data: seller, error } = await supabase
@@ -46,10 +37,6 @@ export async function updateSeller(
   token: string,
   data: Partial<CreateSellerData>
 ): Promise<{ success: boolean; error?: string }> {
-  if (isDemoMode()) {
-    return { success: true };
-  }
-
   const supabase = createAdminClient();
 
   const { data: existing } = await supabase
@@ -81,11 +68,6 @@ export async function updateSeller(
 }
 
 export async function resolveSellerByToken(token: string): Promise<string | null> {
-  if (isDemoMode()) {
-    const seller = DEMO_SELLERS.find((s) => s.management_token === token);
-    return seller?.id || null;
-  }
-
   const supabase = createAdminClient();
 
   const { data } = await supabase

@@ -1,14 +1,9 @@
 'use server';
 
 import { Listing } from '@/lib/types';
-import { isDemoMode, DEMO_LISTINGS } from '@/lib/demo-data';
 
 export async function fetchSavedListings(ids: string[]): Promise<Listing[]> {
   if (ids.length === 0) return [];
-
-  if (isDemoMode()) {
-    return DEMO_LISTINGS.filter((l) => ids.includes(l.id));
-  }
 
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();

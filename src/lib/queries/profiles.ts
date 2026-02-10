@@ -1,11 +1,6 @@
 import { Listing } from '@/lib/types';
-import { isDemoMode, DEMO_LISTINGS } from '@/lib/demo-data';
 
 export async function getListingsByUserId(userId: string): Promise<Listing[]> {
-  if (isDemoMode()) {
-    return DEMO_LISTINGS.filter((l) => l.user_id === userId && l.status !== 'deleted');
-  }
-
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
 

@@ -1,59 +1,11 @@
 import { Listing, ListingFilters } from '@/lib/types';
-import { isDemoMode, DEMO_LISTINGS, DEMO_CATEGORIES } from '@/lib/demo-data';
-import { getAllDemoCreatedListings, getDemoListing, getDemoListingByToken } from '@/lib/demo-store';
 
 const ITEMS_PER_PAGE = 12;
-
-function allDemoListings(): Listing[] {
-  return [...DEMO_LISTINGS, ...getAllDemoCreatedListings()];
-}
-
-function filterDemoListings(filters: ListingFilters): { listings: Listing[]; total: number } {
-  let results = allDemoListings();
-
-  if (filters.search) {
-    const q = filters.search.toLowerCase();
-    results = results.filter(
-      (l) =>
-        l.title.toLowerCase().includes(q) ||
-        l.description.toLowerCase().includes(q) ||
-        (l.brand && l.brand.toLowerCase().includes(q)) ||
-        (l.model && l.model.toLowerCase().includes(q))
-    );
-  }
-  if (filters.category) {
-    results = results.filter((l) => l.category_id === filters.category);
-  }
-  if (filters.location) {
-    results = results.filter((l) => l.location_id === filters.location);
-  }
-  if (filters.condition) {
-    results = results.filter((l) => l.condition === filters.condition);
-  }
-  if (filters.energy_type) {
-    results = results.filter((l) => l.energy_type === filters.energy_type);
-  }
-  if (filters.price_min !== undefined) {
-    results = results.filter((l) => l.price !== null && l.price >= filters.price_min!);
-  }
-  if (filters.price_max !== undefined) {
-    results = results.filter((l) => l.price !== null && l.price <= filters.price_max!);
-  }
-
-  const total = results.length;
-  const page = filters.page || 1;
-  const from = (page - 1) * ITEMS_PER_PAGE;
-  results = results.slice(from, from + ITEMS_PER_PAGE);
-
-  return { listings: results, total };
-}
 
 export async function getListings(filters: ListingFilters = {}): Promise<{
   listings: Listing[];
   total: number;
 }> {
-  if (isDemoMode()) return filterDemoListings(filters);
-
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
   const page = filters.page || 1;
@@ -121,13 +73,6 @@ export async function getListingsByCategorySlug(slug: string, filters: ListingFi
   total: number;
   categoryName: string;
 }> {
-  if (isDemoMode()) {
-    const category = DEMO_CATEGORIES.find((c) => c.slug === slug);
-    if (!category) return { listings: [], total: 0, categoryName: '' };
-    const result = filterDemoListings({ ...filters, category: category.id });
-    return { ...result, categoryName: category.name };
-  }
-
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
 
@@ -146,10 +91,6 @@ export async function getListingsByCategorySlug(slug: string, filters: ListingFi
 }
 
 export async function getListingById(id: string): Promise<Listing | null> {
-  if (isDemoMode()) {
-    return getDemoListing(id) || DEMO_LISTINGS.find((l) => l.id === id) || null;
-  }
-
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
 
@@ -175,10 +116,6 @@ export async function getListingById(id: string): Promise<Listing | null> {
 }
 
 export async function getListingByToken(token: string): Promise<Listing | null> {
-  if (isDemoMode()) {
-    return getDemoListingByToken(token) || DEMO_LISTINGS.find((l) => l.management_token === token) || null;
-  }
-
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
 
@@ -205,10 +142,6 @@ export async function getListingByToken(token: string): Promise<Listing | null> 
 export async function getListingsByIds(ids: string[]): Promise<Listing[]> {
   if (ids.length === 0) return [];
 
-  if (isDemoMode()) {
-    return allDemoListings().filter((l) => ids.includes(l.id));
-  }
-
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
 
@@ -233,13 +166,6 @@ export async function getListingsByIds(ids: string[]): Promise<Listing[]> {
 }
 
 export async function getLatestListings(limit = 6): Promise<Listing[]> {
-  if (isDemoMode()) {
-    return allDemoListings()
-      .filter((l) => l.status === 'active')
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, limit);
-  }
-
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
 

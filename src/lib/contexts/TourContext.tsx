@@ -73,18 +73,15 @@ export function useTour() {
 }
 
 export function TourProvider({ children }: { children: ReactNode }) {
-  const { user, markDemoTourSeen } = useAuth();
+  const { user } = useAuth();
   const [isActive, setIsActive] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
   const markSeen = useCallback(async () => {
-    const demo = !process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'your_supabase_url_here';
-    if (demo) {
-      markDemoTourSeen();
-    } else if (user?.id) {
+    if (user?.id) {
       await markTourAsSeen(user.id);
     }
-  }, [user, markDemoTourSeen]);
+  }, [user]);
 
   const startTour = useCallback(() => {
     setCurrentStep(0);
