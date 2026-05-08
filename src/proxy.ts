@@ -1,17 +1,30 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import createIntlMiddleware from 'next-intl/middleware';
+import { routing } from './i18n/routing';
+
+const intlMiddleware = createIntlMiddleware(routing);
 
 export async function proxy(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  const { pathname } = request.nextUrl;
 
+  // Skip i18n for auth callback and API routes
+  const isAuthOrApi = pathname.startsWith('/auth') || pathname.startsWith('/api');
+
+  // Run next-intl middleware for locale routing (unless auth/api)
+  let response: NextResponse;
+  if (isAuthOrApi) {
+    response = NextResponse.next({ request });
+  } else {
+    response = intlMiddleware(request) as NextResponse;
+  }
+
+  // Refresh Supabase auth cookies
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Skip auth refresh if Supabase is not configured
   if (!supabaseUrl || !supabaseAnonKey) {
-    return supabaseResponse;
+    return response;
   }
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -23,20 +36,20 @@ export async function proxy(request: NextRequest) {
         cookiesToSet.forEach(({ name, value }) =>
           request.cookies.set(name, value)
         );
-        supabaseResponse = NextResponse.next({
-          request,
-        });
         cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options)
+          response.cookies.set(name, value, options)
         );
       },
     },
   });
 
-  // Refresh the session
-  await supabase.auth.getUser();
+  // IMPORTANT: We intentionally do NOT call supabase.auth.getUser() or
+  // getSession() here. On slow networks (e.g. mobile in Tunisia), these
+  // calls can hang and block ALL page loads. The client-side Supabase
+  // client handles session refresh automatically.
+  void supabase;
 
-  return supabaseResponse;
+  return response;
 }
 
 export const config = {

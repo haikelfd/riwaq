@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Input from '@/components/ui/Input';
 
 interface SellerProfileToggleProps {
@@ -16,6 +17,7 @@ export default function SellerProfileToggle({
   profileEmail,
   onChange,
 }: SellerProfileToggleProps) {
+  const t = useTranslations('stepContact');
   const [mode, setMode] = useState<'none' | 'create' | 'existing'>(
     createProfile ? 'create' : profileToken ? 'existing' : 'none'
   );
@@ -38,9 +40,9 @@ export default function SellerProfileToggle({
   return (
     <div className="space-y-3">
       <div className="pt-2">
-        <p className="text-sm font-medium text-slate-900 mb-2">Profil vendeur</p>
+        <p className="text-sm font-medium text-slate-900 mb-2">{t('sellerProfile')}</p>
         <p className="text-xs text-slate-500 mb-3">
-          Regroupez vos annonces sur une page profil publique. Totalement optionnel.
+          {t('sellerProfileDesc')}
         </p>
 
         <div className="space-y-2">
@@ -52,7 +54,7 @@ export default function SellerProfileToggle({
               onChange={() => handleModeChange('none')}
               className="w-4 h-4 text-brand-600 accent-brand-600"
             />
-            <span className="text-sm text-slate-700">Pas de profil</span>
+            <span className="text-sm text-slate-700">{t('noProfile')}</span>
           </label>
 
           <label className="flex items-center gap-2.5 cursor-pointer">
@@ -63,7 +65,7 @@ export default function SellerProfileToggle({
               onChange={() => handleModeChange('create')}
               className="w-4 h-4 text-brand-600 accent-brand-600"
             />
-            <span className="text-sm text-slate-700">Créer un profil vendeur</span>
+            <span className="text-sm text-slate-700">{t('createProfile')}</span>
           </label>
 
           <label className="flex items-center gap-2.5 cursor-pointer">
@@ -74,36 +76,36 @@ export default function SellerProfileToggle({
               onChange={() => handleModeChange('existing')}
               className="w-4 h-4 text-brand-600 accent-brand-600"
             />
-            <span className="text-sm text-slate-700">J&apos;ai déjà un profil</span>
+            <span className="text-sm text-slate-700">{t('existingProfile')}</span>
           </label>
         </div>
       </div>
 
       {mode === 'create' && (
-        <div className="pl-6">
+        <div className="ps-6">
           <Input
-            label="Email (optionnel)"
+            label={t('emailLabel')}
             type="email"
-            placeholder="votre@email.com"
+            placeholder={t('emailPlaceholder')}
             value={profileEmail}
             onChange={(e) => onChange('profile_email', e.target.value)}
           />
           <p className="text-xs text-slate-400 mt-1">
-            Uniquement pour recevoir des notifications. Ne sera pas affiché.
+            {t('emailHint')}
           </p>
         </div>
       )}
 
       {mode === 'existing' && (
-        <div className="pl-6">
+        <div className="ps-6">
           <Input
-            label="Token de profil"
-            placeholder="Collez votre token ici"
+            label={t('tokenLabel')}
+            placeholder={t('tokenPlaceholder')}
             value={profileToken}
             onChange={(e) => onChange('profile_token', e.target.value)}
           />
           <p className="text-xs text-slate-400 mt-1">
-            Le token reçu lors de la création de votre profil.
+            {t('tokenHint')}
           </p>
         </div>
       )}

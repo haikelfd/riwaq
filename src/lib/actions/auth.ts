@@ -18,7 +18,7 @@ export async function updateProfile(
 
   if (error) {
     console.error('Error updating profile:', error);
-    return { success: false, error: 'Erreur lors de la mise à jour du profil.' };
+    return { success: false, error: 'profileUpdateError' };
   }
 
   return { success: true };
@@ -36,7 +36,7 @@ export async function markTourAsSeen(
 
   if (error) {
     console.error('Error marking tour as seen:', error);
-    return { success: false, error: 'Erreur lors de la mise à jour.' };
+    return { success: false, error: 'tourUpdateError' };
   }
 
   return { success: true };

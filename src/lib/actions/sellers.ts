@@ -9,6 +9,17 @@ export async function createSeller(data: CreateSellerData): Promise<{
   managementToken?: string;
   error?: string;
 }> {
+  // Server-side input validation
+  if (!data.full_name?.trim() || data.full_name.trim().length > 100) {
+    return { success: false, error: 'sellerNameInvalid' };
+  }
+  if (!data.phone?.trim() || data.phone.replace(/\D/g, '').length < 8) {
+    return { success: false, error: 'sellerPhoneInvalid' };
+  }
+  if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    return { success: false, error: 'sellerEmailInvalid' };
+  }
+
   const supabase = createAdminClient();
 
   const { data: seller, error } = await supabase
@@ -23,7 +34,7 @@ export async function createSeller(data: CreateSellerData): Promise<{
 
   if (error) {
     console.error('Error creating seller:', error);
-    return { success: false, error: 'Erreur lors de la création du profil.' };
+    return { success: false, error: 'sellerCreateError' };
   }
 
   return {
@@ -46,7 +57,7 @@ export async function updateSeller(
     .single();
 
   if (!existing) {
-    return { success: false, error: 'Profil introuvable ou lien invalide.' };
+    return { success: false, error: 'sellerNotFound' };
   }
 
   const updateData: Record<string, unknown> = {};
@@ -61,10 +72,43 @@ export async function updateSeller(
 
   if (error) {
     console.error('Error updating seller:', error);
-    return { success: false, error: 'Erreur lors de la mise à jour du profil.' };
+    return { success: false, error: 'sellerUpdateError' };
   }
 
   return { success: true };
+}
+
+export async function fetchSellerByToken(token: string): Promise<{
+  id: string;
+  full_name: string;
+  phone: string;
+  email: string | null;
+  created_at: string;
+  updated_at: string;
+} | null> {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from('sellers')
+    .select('id, full_name, phone, email, created_at, updated_at')
+    .eq('management_token', token)
+    .single();
+  return data;
+}
+
+export async function fetchSellerListings(sellerId: string) {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from('listings')
+    .select(`
+      id, title, description, price, condition, category_id, location_id,
+      phone, seller_name, seller_id, brand, model, year, energy_type, delivery_type, subcategory_id, specs,
+      status, created_at, expires_at, updated_at, user_id,
+      category:categories(*), location:locations(*), images:listing_images(*), subcategory:subcategories(*)
+    `)
+    .eq('seller_id', sellerId)
+    .in('status', ['active', 'sold'])
+    .order('created_at', { ascending: false });
+  return data || [];
 }
 
 export async function resolveSellerByToken(token: string): Promise<string | null> {

@@ -12,6 +12,7 @@ interface SavedListingsContextType {
   isListingSaved: (id: string) => boolean;
   clearAll: () => void;
   count: number;
+  hydrated: boolean;
 }
 
 const SavedListingsContext = createContext<SavedListingsContextType>({
@@ -21,6 +22,7 @@ const SavedListingsContext = createContext<SavedListingsContextType>({
   isListingSaved: () => false,
   clearAll: () => {},
   count: 0,
+  hydrated: false,
 });
 
 export function useSavedListings() {
@@ -48,10 +50,12 @@ function writeToStorage(ids: string[]) {
 
 export function SavedListingsProvider({ children }: { children: ReactNode }) {
   const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [hydrated, setHydrated] = useState(false);
 
   // Hydrate from localStorage on mount
   useEffect(() => {
     setSavedIds(readFromStorage());
+    setHydrated(true);
   }, []);
 
   const addListing = useCallback((id: string) => {
@@ -90,6 +94,7 @@ export function SavedListingsProvider({ children }: { children: ReactNode }) {
         isListingSaved,
         clearAll,
         count: savedIds.length,
+        hydrated,
       }}
     >
       {children}

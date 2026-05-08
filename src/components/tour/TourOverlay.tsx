@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { useTour } from '@/lib/contexts/TourContext';
 
 interface TargetRect {
@@ -11,6 +12,7 @@ interface TargetRect {
 }
 
 export default function TourOverlay() {
+  const t = useTranslations('tour');
   const { isActive, currentStep, totalSteps, currentStepData, nextStep, skipTour } = useTour();
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const [viewportSize, setViewportSize] = useState({ w: 0, h: 0 });
@@ -146,17 +148,17 @@ export default function TourOverlay() {
       >
         <div className="bg-white rounded-xl border border-slate-200 shadow-lg p-4 sm:p-5">
           <h3 className="font-heading text-sm sm:text-base font-semibold text-slate-900 mb-1">
-            {currentStepData.title}
+            {t(currentStepData.titleKey)}
           </h3>
           <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mb-3 sm:mb-4">
-            {currentStepData.description}
+            {t(currentStepData.descriptionKey)}
           </p>
           <div className="flex items-center justify-between">
             <button
               onClick={skipTour}
               className="text-xs sm:text-sm text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
             >
-              Passer
+              {t('skip')}
             </button>
             <div className="flex items-center gap-2 sm:gap-3">
               <span className="text-xs text-slate-400">
@@ -166,7 +168,7 @@ export default function TourOverlay() {
                 onClick={nextStep}
                 className="bg-slate-900 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-slate-800 transition-colors cursor-pointer"
               >
-                {isLastStep ? 'Terminer' : 'Suivant'}
+                {isLastStep ? t('finish') : t('next')}
               </button>
             </div>
           </div>

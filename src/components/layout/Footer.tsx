@@ -1,6 +1,11 @@
-import Link from 'next/link';
+'use client';
+
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 
 export default function Footer() {
+  const t = useTranslations('footer');
+
   return (
     <footer className="bg-slate-900 text-slate-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
@@ -16,22 +21,27 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-sm leading-relaxed">
-              La plateforme tunisienne pour le matériel professionnel de restaurant et café.
+              {t('tagline')}
             </p>
           </div>
 
           {/* Navigation */}
           <div>
-            <h4 className="font-medium text-white mb-4 text-sm">Navigation</h4>
+            <h4 className="font-medium text-white mb-4 text-sm">{t('navigation')}</h4>
             <ul className="space-y-2.5 text-sm">
               <li>
                 <Link href="/annonces" className="hover:text-white transition-colors">
-                  Parcourir
+                  {t('browse')}
                 </Link>
               </li>
               <li>
                 <Link href="/deposer" className="hover:text-white transition-colors">
-                  Déposer une annonce
+                  {t('postListing')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/tarifs" className="hover:text-white transition-colors">
+                  {t('pricing')}
                 </Link>
               </li>
             </ul>
@@ -39,32 +49,32 @@ export default function Footer() {
 
           {/* Categories */}
           <div>
-            <h4 className="font-medium text-white mb-4 text-sm">Catégories</h4>
+            <h4 className="font-medium text-white mb-4 text-sm">{t('categories')}</h4>
             <ul className="space-y-2.5 text-sm">
-              <li><Link href="/categorie/cafe-coffee" className="hover:text-white transition-colors">Café & Coffee</Link></li>
-              <li><Link href="/categorie/cuisine-chaude" className="hover:text-white transition-colors">Cuisine chaude</Link></li>
-              <li><Link href="/categorie/froid-refrigeration" className="hover:text-white transition-colors">Réfrigération</Link></li>
-              <li><Link href="/categorie/mobilier" className="hover:text-white transition-colors">Mobilier</Link></li>
+              <li><Link href="/categorie/cafe-coffee" className="hover:text-white transition-colors">{t('cafeCoffee')}</Link></li>
+              <li><Link href="/categorie/cuisine-chaude" className="hover:text-white transition-colors">{t('hotKitchen')}</Link></li>
+              <li><Link href="/categorie/froid-refrigeration" className="hover:text-white transition-colors">{t('refrigeration')}</Link></li>
+              <li><Link href="/categorie/mobilier" className="hover:text-white transition-colors">{t('furniture')}</Link></li>
             </ul>
           </div>
 
           {/* Info */}
           <div>
-            <h4 className="font-medium text-white mb-4 text-sm">Informations</h4>
+            <h4 className="font-medium text-white mb-4 text-sm">{t('info')}</h4>
             <ul className="space-y-2.5 text-sm">
-              <li><Link href="/a-propos" className="hover:text-white transition-colors">À propos</Link></li>
-              <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
-              <li><Link href="/conditions" className="hover:text-white transition-colors">Conditions d&apos;utilisation</Link></li>
+              <li><Link href="/a-propos" className="hover:text-white transition-colors">{t('about')}</Link></li>
+              <li><Link href="/contact" className="hover:text-white transition-colors">{t('contact')}</Link></li>
+              <li><Link href="/conditions" className="hover:text-white transition-colors">{t('terms')}</Link></li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-slate-500">
-            &copy; {new Date().getFullYear()} Riwaq. Tous droits réservés.
+            {t('copyright', { year: new Date().getFullYear() })}
           </p>
           <p className="text-xs text-slate-600">
-            Plateforme d&apos;annonces — les transactions sont sous la responsabilité des utilisateurs.
+            {t('disclaimer')}
           </p>
         </div>
       </div>

@@ -1,11 +1,14 @@
 'use client';
 
-import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { useSavedListings } from '@/lib/contexts/SavedListingsContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import LanguageSwitcher from './LanguageSwitcher';
 
 export default function Header() {
+  const t = useTranslations('header');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -61,16 +64,22 @@ export default function Header() {
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-1">
             <Link
+              href="/"
+              className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors text-sm font-medium px-4 py-2 rounded-lg"
+            >
+              {t('home')}
+            </Link>
+            <Link
               href="/annonces"
               className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors text-sm font-medium px-4 py-2 rounded-lg"
             >
-              Parcourir
+              {t('browse')}
             </Link>
             <Link
-              href="/categorie/cafe-coffee"
+              href="/tarifs"
               className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors text-sm font-medium px-4 py-2 rounded-lg"
             >
-              Catégories
+              {t('pricing')}
             </Link>
             <Link
               href="/sauvegardees"
@@ -81,7 +90,7 @@ export default function Header() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
               </svg>
               {count > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-brand-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute -top-0.5 -end-0.5 w-4 h-4 bg-brand-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   {count > 9 ? '9+' : count}
                 </span>
               )}
@@ -93,27 +102,27 @@ export default function Header() {
                 <div ref={dropdownRef} className="relative" data-tour-id="tour-account">
                   <button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer ml-1"
+                    className="w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer ms-1"
                   >
                     {initial}
                   </button>
                   {dropdownOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl border border-slate-200 shadow-lg py-1 z-50">
+                    <div className="absolute end-0 top-full mt-2 w-48 bg-white rounded-xl border border-slate-200 shadow-lg py-1 z-50">
                       <Link
                         href="/mon-compte"
                         className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                         onClick={() => setDropdownOpen(false)}
                       >
-                        Mon compte
+                        {t('myAccount')}
                       </Link>
                       <button
                         onClick={() => {
                           setDropdownOpen(false);
                           signOut();
                         }}
-                        className="block w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                        className="block w-full text-start px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
                       >
-                        Déconnexion
+                        {t('logout')}
                       </button>
                     </div>
                   )}
@@ -124,10 +133,12 @@ export default function Header() {
                   data-tour-id="tour-account"
                   className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors text-sm font-medium px-4 py-2 rounded-lg"
                 >
-                  Se connecter
+                  {t('login')}
                 </Link>
               )
             )}
+
+            <LanguageSwitcher />
 
             <div className="w-px h-6 bg-slate-200 mx-2" />
             <Link
@@ -135,7 +146,7 @@ export default function Header() {
               data-tour-id="tour-post"
               className="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 transition-all shadow-sm hover:shadow-md"
             >
-              + Déposer une annonce
+              {t('postListing')}
             </Link>
           </nav>
 
@@ -143,7 +154,7 @@ export default function Header() {
           <button
             className="md:hidden p-2 text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Menu"
+            aria-label={t('menu')}
           >
             {mobileOpen ? (
               <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -161,18 +172,25 @@ export default function Header() {
         {mobileOpen && (
           <div className="md:hidden border-t border-slate-100 py-3 space-y-1 animate-in">
             <Link
+              href="/"
+              className="block text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors text-sm font-medium py-2.5 px-3 rounded-lg"
+              onClick={() => setMobileOpen(false)}
+            >
+              {t('home')}
+            </Link>
+            <Link
               href="/annonces"
               className="block text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors text-sm font-medium py-2.5 px-3 rounded-lg"
               onClick={() => setMobileOpen(false)}
             >
-              Parcourir les annonces
+              {t('browseListings')}
             </Link>
             <Link
-              href="/categorie/cafe-coffee"
+              href="/tarifs"
               className="block text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors text-sm font-medium py-2.5 px-3 rounded-lg"
               onClick={() => setMobileOpen(false)}
             >
-              Catégories
+              {t('pricing')}
             </Link>
             <Link
               href="/sauvegardees"
@@ -182,7 +200,7 @@ export default function Header() {
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
               </svg>
-              Sauvegardées
+              {t('saved')}
               {count > 0 && (
                 <span className="w-5 h-5 bg-brand-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   {count > 9 ? '9+' : count}
@@ -202,16 +220,16 @@ export default function Header() {
                     <div className="w-5 h-5 bg-slate-900 text-white rounded-full flex items-center justify-center text-[10px] font-bold">
                       {initial}
                     </div>
-                    Mon compte
+                    {t('myAccount')}
                   </Link>
                   <button
                     onClick={() => {
                       setMobileOpen(false);
                       signOut();
                     }}
-                    className="flex items-center gap-2 w-full text-left text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors text-sm font-medium py-2.5 px-3 rounded-lg cursor-pointer"
+                    className="flex items-center gap-2 w-full text-start text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors text-sm font-medium py-2.5 px-3 rounded-lg cursor-pointer"
                   >
-                    Déconnexion
+                    {t('logout')}
                   </button>
                 </>
               ) : (
@@ -220,10 +238,14 @@ export default function Header() {
                   className="block text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors text-sm font-medium py-2.5 px-3 rounded-lg"
                   onClick={() => setMobileOpen(false)}
                 >
-                  Se connecter
+                  {t('login')}
                 </Link>
               )
             )}
+
+            <div className="px-3 py-2">
+              <LanguageSwitcher />
+            </div>
 
             <div className="pt-2">
               <Link
@@ -231,7 +253,7 @@ export default function Header() {
                 className="block bg-slate-900 text-white px-4 py-3 rounded-xl text-sm font-medium hover:bg-slate-800 transition-colors text-center"
                 onClick={() => setMobileOpen(false)}
               >
-                + Déposer une annonce
+                {t('postListing')}
               </Link>
             </div>
           </div>

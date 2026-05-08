@@ -23,7 +23,7 @@ export const CATEGORIES: Omit<Category, 'id'>[] = [
     sort_order: 3,
   },
   {
-    name: 'Mobilier',
+    name: 'Meubles & Agencement',
     name_ar: 'أثاث',
     slug: 'mobilier',
     icon: 'chair',

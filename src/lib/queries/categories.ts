@@ -1,8 +1,8 @@
-import { Category, Location } from '@/lib/types';
+import { Category, Location, Subcategory } from '@/lib/types';
 
 export async function getCategories(): Promise<Category[]> {
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
+  const { createAdminClient } = await import('@/lib/supabase/admin');
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('categories')
@@ -18,8 +18,8 @@ export async function getCategories(): Promise<Category[]> {
 }
 
 export async function getLocations(): Promise<Location[]> {
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
+  const { createAdminClient } = await import('@/lib/supabase/admin');
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('locations')
@@ -35,8 +35,8 @@ export async function getLocations(): Promise<Location[]> {
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
+  const { createAdminClient } = await import('@/lib/supabase/admin');
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('categories')
@@ -49,4 +49,39 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
   }
 
   return data as Category;
+}
+
+export async function getSubcategories(categoryId: string): Promise<Subcategory[]> {
+  const { createAdminClient } = await import('@/lib/supabase/admin');
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from('subcategories')
+    .select('*')
+    .eq('category_id', categoryId)
+    .order('sort_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching subcategories:', error);
+    return [];
+  }
+
+  return (data as Subcategory[]) || [];
+}
+
+export async function getAllSubcategories(): Promise<Subcategory[]> {
+  const { createAdminClient } = await import('@/lib/supabase/admin');
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from('subcategories')
+    .select('*')
+    .order('sort_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching all subcategories:', error);
+    return [];
+  }
+
+  return (data as Subcategory[]) || [];
 }

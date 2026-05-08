@@ -45,21 +45,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const supabase = createClient();
 
-    // Get initial session
-    supabase.auth.getUser().then(({ data: { user: currentUser } }) => {
-      setUser(currentUser);
-      if (currentUser) {
-        fetchProfile(currentUser.id);
-      }
-      setLoading(false);
-    });
-
-    // Listen for auth changes
+    // Use onAuthStateChange as the single source of truth.
+    // INITIAL_SESSION fires immediately on subscribe with the current session,
+    // so we don't need a separate getSession() call (which can hang on slow networks).
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          setUser(session.user);
-          await fetchProfile(session.user.id);
+      (event, session) => {
+        const currentUser = session?.user ?? null;
+
+        if (event === 'INITIAL_SESSION') {
+          setUser(currentUser);
+          if (currentUser) {
+            fetchProfile(currentUser.id);
+          }
+          setLoading(false);
+        } else if (event === 'SIGNED_IN' && currentUser) {
+          setUser(currentUser);
+          fetchProfile(currentUser.id);
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
           setProfile(null);

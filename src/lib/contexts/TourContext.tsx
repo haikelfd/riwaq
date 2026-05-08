@@ -6,40 +6,40 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 
 export interface TourStep {
   targetId: string;
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
   position: 'top' | 'bottom' | 'left' | 'right';
 }
 
 export const TOUR_STEPS: TourStep[] = [
   {
     targetId: 'tour-search',
-    title: 'Recherchez du matériel',
-    description: 'Utilisez la barre de recherche pour trouver exactement ce que vous cherchez.',
+    titleKey: 'step1Title',
+    descriptionKey: 'step1Desc',
     position: 'bottom',
   },
   {
     targetId: 'tour-categories',
-    title: 'Parcourez par catégorie',
-    description: 'Café, cuisine, réfrigération... trouvez la bonne catégorie.',
+    titleKey: 'step2Title',
+    descriptionKey: 'step2Desc',
     position: 'bottom',
   },
   {
     targetId: 'tour-save',
-    title: 'Sauvegardez vos favoris',
-    description: 'Cliquez sur le coeur pour retrouver une annonce plus tard.',
+    titleKey: 'step3Title',
+    descriptionKey: 'step3Desc',
     position: 'left',
   },
   {
     targetId: 'tour-post',
-    title: 'Déposez une annonce',
-    description: 'Vendez votre matériel en quelques minutes. Gratuit et sans commission.',
+    titleKey: 'step4Title',
+    descriptionKey: 'step4Desc',
     position: 'bottom',
   },
   {
     targetId: 'tour-account',
-    title: 'Votre compte',
-    description: 'Retrouvez vos annonces et gérez votre profil ici.',
+    titleKey: 'step5Title',
+    descriptionKey: 'step5Desc',
     position: 'bottom',
   },
 ];

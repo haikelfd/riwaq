@@ -4,9 +4,10 @@ export async function getSellerById(id: string): Promise<Seller | null> {
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
 
+  // Never expose management_token in public queries
   const { data, error } = await supabase
     .from('sellers')
-    .select('*')
+    .select('id, full_name, phone, email, created_at, updated_at')
     .eq('id', id)
     .single();
 
@@ -15,7 +16,7 @@ export async function getSellerById(id: string): Promise<Seller | null> {
     return null;
   }
 
-  return data as Seller;
+  return data as unknown as Seller;
 }
 
 export async function getSellerByToken(token: string): Promise<Seller | null> {
@@ -24,7 +25,7 @@ export async function getSellerByToken(token: string): Promise<Seller | null> {
 
   const { data, error } = await supabase
     .from('sellers')
-    .select('*')
+    .select('id, full_name, phone, email, created_at, updated_at')
     .eq('management_token', token)
     .single();
 
@@ -43,7 +44,9 @@ export async function getListingsBySellerId(sellerId: string): Promise<Listing[]
   const { data, error } = await supabase
     .from('listings')
     .select(`
-      *,
+      id, title, description, price, condition, category_id, location_id,
+      phone, seller_name, seller_id, brand, model, year, energy_type, delivery_type,
+      status, created_at, expires_at, updated_at, user_id,
       category:categories(*),
       location:locations(*),
       images:listing_images(*)
@@ -57,5 +60,5 @@ export async function getListingsBySellerId(sellerId: string): Promise<Listing[]
     return [];
   }
 
-  return (data as Listing[]) || [];
+  return (data as unknown as Listing[]) || [];
 }

@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useTour } from '@/lib/contexts/TourContext';
 import { markTourAsSeen } from '@/lib/actions/auth';
 import Button from '@/components/ui/Button';
 
 export default function WelcomeModal() {
+  const t = useTranslations('tour');
   const router = useRouter();
   const { user, profile } = useAuth();
   const { startTour } = useTour();
@@ -60,18 +62,18 @@ export default function WelcomeModal() {
         </div>
 
         <h2 className="font-heading text-xl sm:text-2xl font-bold text-slate-900 mb-2">
-          Bienvenue sur Riwaq !
+          {t('welcomeTitle')}
         </h2>
         <p className="text-slate-500 text-sm mb-6 sm:mb-8 leading-relaxed">
-          Voulez-vous découvrir le site en quelques étapes ?
+          {t('welcomeSubtitle')}
         </p>
 
         <div className="flex gap-3">
           <Button variant="ghost" fullWidth onClick={handleDismiss}>
-            Non merci
+            {t('welcomeNo')}
           </Button>
           <Button fullWidth onClick={handleStartTour}>
-            Oui, allons-y !
+            {t('welcomeYes')}
           </Button>
         </div>
       </div>

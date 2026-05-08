@@ -1,25 +1,64 @@
 import { Listing, ListingFilters } from '@/lib/types';
+import { getSearchExpansions } from '@/lib/constants/search-synonyms';
 
 const ITEMS_PER_PAGE = 12;
+
+// Never include management_token in public queries
+const LISTING_SELECT = `
+  id, title, description, price, condition, category_id, location_id,
+  phone, seller_name, seller_id, brand, model, year, energy_type, delivery_type,
+  cuisine_type, subcategory_id, specs, status, created_at, expires_at, updated_at, user_id
+`;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyCommonFilters(query: any, filters: ListingFilters) {
+  if (filters.category) {
+    query = query.eq('category_id', filters.category);
+  }
+  if (filters.location) {
+    query = query.eq('location_id', filters.location);
+  }
+  if (filters.condition) {
+    query = query.eq('condition', filters.condition);
+  }
+  if (filters.price_min !== undefined) {
+    query = query.gte('price', filters.price_min);
+  }
+  if (filters.price_max !== undefined) {
+    query = query.lte('price', filters.price_max);
+  }
+  if (filters.energy_type) {
+    query = query.eq('energy_type', filters.energy_type);
+  }
+  if (filters.cuisine_type) {
+    query = query.eq('cuisine_type', filters.cuisine_type);
+  }
+  return query;
+}
 
 export async function getListings(filters: ListingFilters = {}): Promise<{
   listings: Listing[];
   total: number;
+  isRelated?: boolean;
+  relatedTerm?: string;
 }> {
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
+  const { createAdminClient } = await import('@/lib/supabase/admin');
+  const supabase = createAdminClient();
   const page = filters.page || 1;
   const from = (page - 1) * ITEMS_PER_PAGE;
   const to = from + ITEMS_PER_PAGE - 1;
 
-  let query = supabase
-    .from('listings')
-    .select(`
-      *,
+  const selectClause = `${LISTING_SELECT},
       category:categories(*),
       location:locations(*),
+      subcategory:subcategories(*),
       images:listing_images(*)
-    `, { count: 'exact' })
+    `;
+
+  // Build primary query
+  let query = supabase
+    .from('listings')
+    .select(selectClause, { count: 'exact' })
     .eq('status', 'active')
     .order('created_at', { ascending: false })
     .range(from, to);
@@ -31,29 +70,7 @@ export async function getListings(filters: ListingFilters = {}): Promise<{
     });
   }
 
-  if (filters.category) {
-    query = query.eq('category_id', filters.category);
-  }
-
-  if (filters.location) {
-    query = query.eq('location_id', filters.location);
-  }
-
-  if (filters.condition) {
-    query = query.eq('condition', filters.condition);
-  }
-
-  if (filters.price_min !== undefined) {
-    query = query.gte('price', filters.price_min);
-  }
-
-  if (filters.price_max !== undefined) {
-    query = query.lte('price', filters.price_max);
-  }
-
-  if (filters.energy_type) {
-    query = query.eq('energy_type', filters.energy_type);
-  }
+  query = applyCommonFilters(query, filters);
 
   const { data, count, error } = await query;
 
@@ -62,8 +79,60 @@ export async function getListings(filters: ListingFilters = {}): Promise<{
     return { listings: [], total: 0 };
   }
 
+  // Fallback: if full-text search returned 0 results, try fuzzy ilike search
+  if (filters.search && (!data || data.length === 0)) {
+    const term = `%${filters.search}%`;
+    let fuzzyQuery = supabase
+      .from('listings')
+      .select(selectClause, { count: 'exact' })
+      .eq('status', 'active')
+      .or(`title.ilike.${term},brand.ilike.${term},model.ilike.${term},description.ilike.${term}`)
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    fuzzyQuery = applyCommonFilters(fuzzyQuery, filters);
+
+    const { data: fuzzyData, count: fuzzyCount, error: fuzzyError } = await fuzzyQuery;
+
+    if (!fuzzyError && fuzzyData && fuzzyData.length > 0) {
+      return {
+        listings: (fuzzyData as unknown as Listing[]) || [],
+        total: fuzzyCount || 0,
+      };
+    }
+
+    // Tier 3: Synonym expansion — search for related terms
+    const expansions = getSearchExpansions(filters.search);
+    if (expansions && expansions.length > 0) {
+      const synonymQuery = expansions.join(' | ');
+      let relatedQuery = supabase
+        .from('listings')
+        .select(selectClause, { count: 'exact' })
+        .eq('status', 'active')
+        .textSearch('search_vector', synonymQuery, {
+          type: 'websearch',
+          config: 'french',
+        })
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      relatedQuery = applyCommonFilters(relatedQuery, filters);
+
+      const { data: relatedData, count: relatedCount, error: relatedError } = await relatedQuery;
+
+      if (!relatedError && relatedData && relatedData.length > 0) {
+        return {
+          listings: (relatedData as unknown as Listing[]) || [],
+          total: relatedCount || 0,
+          isRelated: true,
+          relatedTerm: filters.search,
+        };
+      }
+    }
+  }
+
   return {
-    listings: (data as Listing[]) || [],
+    listings: (data as unknown as Listing[]) || [],
     total: count || 0,
   };
 }
@@ -73,8 +142,8 @@ export async function getListingsByCategorySlug(slug: string, filters: ListingFi
   total: number;
   categoryName: string;
 }> {
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
+  const { createAdminClient } = await import('@/lib/supabase/admin');
+  const supabase = createAdminClient();
 
   const { data: category } = await supabase
     .from('categories')
@@ -91,15 +160,15 @@ export async function getListingsByCategorySlug(slug: string, filters: ListingFi
 }
 
 export async function getListingById(id: string): Promise<Listing | null> {
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
+  const { createAdminClient } = await import('@/lib/supabase/admin');
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('listings')
-    .select(`
-      *,
+    .select(`${LISTING_SELECT},
       category:categories(*),
       location:locations(*),
+      subcategory:subcategories(*),
       images:listing_images(*),
       seller:sellers(id, full_name, created_at)
     `)
@@ -108,23 +177,23 @@ export async function getListingById(id: string): Promise<Listing | null> {
     .single();
 
   if (error) {
-    console.error('Error fetching listing:', error);
+    console.error('Error fetching listing:', error, '| id:', id);
     return null;
   }
 
-  return data as Listing;
+  return data as unknown as Listing;
 }
 
 export async function getListingByToken(token: string): Promise<Listing | null> {
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
+  const { createAdminClient } = await import('@/lib/supabase/admin');
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('listings')
-    .select(`
-      *,
+    .select(`${LISTING_SELECT},
       category:categories(*),
       location:locations(*),
+      subcategory:subcategories(*),
       images:listing_images(*)
     `)
     .eq('management_token', token)
@@ -136,21 +205,21 @@ export async function getListingByToken(token: string): Promise<Listing | null> 
     return null;
   }
 
-  return data as Listing;
+  return data as unknown as Listing;
 }
 
 export async function getListingsByIds(ids: string[]): Promise<Listing[]> {
   if (ids.length === 0) return [];
 
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
+  const { createAdminClient } = await import('@/lib/supabase/admin');
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('listings')
-    .select(`
-      *,
+    .select(`${LISTING_SELECT},
       category:categories(*),
       location:locations(*),
+      subcategory:subcategories(*),
       images:listing_images(*)
     `)
     .in('id', ids)
@@ -162,19 +231,19 @@ export async function getListingsByIds(ids: string[]): Promise<Listing[]> {
     return [];
   }
 
-  return (data as Listing[]) || [];
+  return (data as unknown as Listing[]) || [];
 }
 
 export async function getLatestListings(limit = 6): Promise<Listing[]> {
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
+  const { createAdminClient } = await import('@/lib/supabase/admin');
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('listings')
-    .select(`
-      *,
+    .select(`${LISTING_SELECT},
       category:categories(*),
       location:locations(*),
+      subcategory:subcategories(*),
       images:listing_images(*)
     `)
     .eq('status', 'active')
@@ -186,5 +255,21 @@ export async function getLatestListings(limit = 6): Promise<Listing[]> {
     return [];
   }
 
-  return (data as Listing[]) || [];
+  return (data as unknown as Listing[]) || [];
+}
+
+export async function getActiveCuisineTypes(): Promise<string[]> {
+  const { createAdminClient } = await import('@/lib/supabase/admin');
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from('listings')
+    .select('cuisine_type')
+    .eq('status', 'active')
+    .not('cuisine_type', 'is', null);
+
+  if (error || !data) return [];
+
+  const unique = [...new Set(data.map((d: { cuisine_type: string }) => d.cuisine_type))];
+  return unique.sort();
 }

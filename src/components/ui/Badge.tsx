@@ -1,6 +1,6 @@
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'default' | 'success' | 'warning' | 'accent' | 'sold';
+  variant?: 'default' | 'success' | 'warning' | 'accent' | 'sold' | 'gold';
   className?: string;
 }
 
@@ -10,6 +10,7 @@ const variantClasses = {
   warning: 'bg-brand-50 text-brand-600',
   accent: 'bg-accent-100 text-accent-700',
   sold: 'bg-red-50 text-red-600',
+  gold: 'bg-amber-50 text-amber-700 border border-amber-300',
 };
 
 export default function Badge({ children, variant = 'default', className = '' }: BadgeProps) {

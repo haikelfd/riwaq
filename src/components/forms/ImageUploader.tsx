@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface ImageUploaderProps {
   images: File[];
@@ -9,6 +10,7 @@ interface ImageUploaderProps {
 }
 
 export default function ImageUploader({ images, onImagesChange, maxImages = 5 }: ImageUploaderProps) {
+  const t = useTranslations('imageUploader');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,7 +33,7 @@ export default function ImageUploader({ images, onImagesChange, maxImages = 5 }:
   return (
     <div>
       <label className="block text-sm font-medium text-slate-900 mb-1.5">
-        Photos (max {maxImages})
+        {t('photosLabel', { max: maxImages })}
       </label>
 
       {/* Preview grid */}
@@ -46,8 +48,8 @@ export default function ImageUploader({ images, onImagesChange, maxImages = 5 }:
             <button
               type="button"
               onClick={() => removeImage(index)}
-              className="absolute top-1.5 right-1.5 w-7 h-7 bg-slate-900/70 text-white rounded-full flex items-center justify-center text-xs hover:bg-slate-900 cursor-pointer"
-              aria-label="Supprimer l'image"
+              className="absolute top-1.5 end-1.5 w-7 h-7 bg-slate-900/70 text-white rounded-full flex items-center justify-center text-xs hover:bg-slate-900 cursor-pointer"
+              aria-label={t('removeImage')}
             >
               &times;
             </button>
@@ -64,7 +66,7 @@ export default function ImageUploader({ images, onImagesChange, maxImages = 5 }:
             <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            <span className="text-xs">Ajouter</span>
+            <span className="text-xs">{t('add')}</span>
           </button>
         )}
       </div>
@@ -79,7 +81,7 @@ export default function ImageUploader({ images, onImagesChange, maxImages = 5 }:
       />
 
       <p className="text-xs text-slate-500">
-        Formats acceptés : JPG, PNG, WebP. Taille max : 5 Mo par image.
+        {t('formats')}
       </p>
     </div>
   );

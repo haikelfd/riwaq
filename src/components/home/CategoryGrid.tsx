@@ -1,9 +1,13 @@
-import Link from 'next/link';
+'use client';
+
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { Category } from '@/lib/types';
 import { getCategoryIcon } from '@/components/ui/Icons';
 
 interface CategoryGridProps {
   categories: Category[];
+  highlightSlugs?: string[];
 }
 
 const categoryStyles: Record<string, { gradient: string; ring: string; iconColor: string }> = {
@@ -15,21 +19,24 @@ const categoryStyles: Record<string, { gradient: string; ring: string; iconColor
   'patisserie-boulangerie': { gradient: 'from-pink-50 to-rose-50', ring: 'group-hover:ring-pink-200', iconColor: 'text-pink-500' },
 };
 
-export default function CategoryGrid({ categories }: CategoryGridProps) {
+export default function CategoryGrid({ categories, highlightSlugs }: CategoryGridProps) {
+  const t = useTranslations('home');
+  const hasFilter = highlightSlugs && highlightSlugs.length > 0;
+
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16" data-tour-id="tour-categories">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="font-heading text-2xl md:text-3xl font-bold text-slate-900">
-            Catégories
+            {t('categoriesTitle')}
           </h2>
-          <p className="text-slate-500 text-sm mt-1">Parcourez par type d&apos;équipement</p>
+          <p className="text-slate-500 text-sm mt-1">{t('categoriesSubtitle')}</p>
         </div>
         <Link
           href="/annonces"
           className="text-sm font-medium text-brand-600 hover:text-brand-500 transition-colors hidden sm:block"
         >
-          Voir tout &rarr;
+          {t('viewAllListings')} &rarr;
         </Link>
       </div>
 
@@ -37,11 +44,15 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
         {categories.map((category) => {
           const style = categoryStyles[category.slug] || { gradient: 'from-slate-50 to-slate-100', ring: 'group-hover:ring-slate-200', iconColor: 'text-slate-400' };
           const IconComponent = getCategoryIcon(category.icon);
+          const isDimmed = hasFilter && !highlightSlugs.includes(category.slug);
+
           return (
             <Link
               key={category.id || category.slug}
               href={`/categorie/${category.slug}`}
-              className={`group relative flex flex-col items-center gap-3 p-6 bg-gradient-to-br ${style.gradient} rounded-2xl ring-1 ring-transparent ${style.ring} hover:shadow-lg transition-all duration-300`}
+              className={`group relative flex flex-col items-center gap-3 p-6 bg-gradient-to-br ${style.gradient} rounded-2xl ring-1 ring-transparent ${style.ring} hover:shadow-lg transition-all duration-300 ${
+                isDimmed ? 'opacity-40 scale-95' : ''
+              }`}
             >
               <IconComponent className={`w-8 h-8 ${style.iconColor} group-hover:scale-110 transition-transform duration-300`} />
               <span className="text-sm font-medium text-slate-700 text-center leading-tight">

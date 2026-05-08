@@ -5,8 +5,8 @@ import { Listing } from '@/lib/types';
 export async function fetchSavedListings(ids: string[]): Promise<Listing[]> {
   if (ids.length === 0) return [];
 
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = await createClient();
+  const { createAdminClient } = await import('@/lib/supabase/admin');
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('listings')
