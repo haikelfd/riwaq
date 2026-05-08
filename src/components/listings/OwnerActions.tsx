@@ -23,7 +23,7 @@ export default function OwnerActions({ listingId, listingUserId }: OwnerActionsP
     if (!confirm(t('deleteConfirm'))) return;
 
     setDeleting(true);
-    const result = await deleteUserListing(listingId, user.id);
+    const result = await deleteUserListing(listingId);
     if (result.success) {
       router.push('/mon-compte');
     } else {

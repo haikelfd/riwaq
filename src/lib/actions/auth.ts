@@ -1,11 +1,20 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
+
+async function getAuthenticatedUserId(): Promise<string | null> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id ?? null;
+}
 
 export async function updateProfile(
-  userId: string,
   data: { full_name?: string }
 ): Promise<{ success: boolean; error?: string }> {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return { success: false, error: 'unauthorized' };
+
   const supabase = createAdminClient();
 
   const updateData: Record<string, unknown> = {};
@@ -17,16 +26,17 @@ export async function updateProfile(
     .eq('id', userId);
 
   if (error) {
-    console.error('Error updating profile:', error);
+    console.error('Error updating profile:', error.code, error.message);
     return { success: false, error: 'profileUpdateError' };
   }
 
   return { success: true };
 }
 
-export async function markTourAsSeen(
-  userId: string
-): Promise<{ success: boolean; error?: string }> {
+export async function markTourAsSeen(): Promise<{ success: boolean; error?: string }> {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return { success: false, error: 'unauthorized' };
+
   const supabase = createAdminClient();
 
   const { error } = await supabase
@@ -35,7 +45,7 @@ export async function markTourAsSeen(
     .eq('id', userId);
 
   if (error) {
-    console.error('Error marking tour as seen:', error);
+    console.error('Error marking tour as seen:', error.code, error.message);
     return { success: false, error: 'tourUpdateError' };
   }
 

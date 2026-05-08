@@ -21,7 +21,7 @@ export async function fetchSavedListings(ids: string[]): Promise<Listing[]> {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching saved listings:', error);
+    console.error('Error fetching saved listings:', error.code, error.message);
     return [];
   }
 

@@ -1,11 +1,30 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { CreateListingData, Listing } from '@/lib/types';
 import { resolveSellerByToken } from '@/lib/actions/sellers';
 import { TIER_LIMITS, ANONYMOUS_LIMITS, type UserTier } from '@/lib/constants/tiers';
 import { CUISINE_TYPE_VALUES } from '@/lib/constants/cuisine-types';
 import { v4 as uuidv4 } from 'uuid';
+
+async function getAuthenticatedUserId(): Promise<string | null> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id ?? null;
+}
+
+async function requireAdmin(): Promise<string | null> {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return null;
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from('admin_users')
+    .select('id')
+    .eq('id', userId)
+    .single();
+  return data ? userId : null;
+}
 
 const MAX_TITLE_LENGTH = 200;
 const MAX_DESCRIPTION_LENGTH = 5000;
@@ -154,7 +173,7 @@ export async function createListing(data: CreateListingData): Promise<{
     .single();
 
   if (error) {
-    console.error('Error creating listing:', error);
+    console.error('Error creating listing:', error.code, error.message);
     return { success: false, error: 'createError' };
   }
 
@@ -188,6 +207,41 @@ export async function updateListing(
     return { success: false, error: 'freeListingNotEditable' };
   }
 
+  // Validate update fields (same rules as createListing)
+  if (data.title !== undefined && (!data.title.trim() || data.title.trim().length > MAX_TITLE_LENGTH)) {
+    return { success: false, error: 'titleInvalid' };
+  }
+  if (data.description !== undefined && data.description.length > MAX_DESCRIPTION_LENGTH) {
+    return { success: false, error: 'descriptionTooLong' };
+  }
+  if (data.price !== undefined && data.price !== null && (data.price < 0 || data.price > 999999999)) {
+    return { success: false, error: 'priceInvalid' };
+  }
+  if (data.condition !== undefined && !['neuf', 'occasion'].includes(data.condition)) {
+    return { success: false, error: 'conditionInvalid' };
+  }
+  if (data.phone !== undefined && data.phone.replace(/\D/g, '').length < 8) {
+    return { success: false, error: 'phoneInvalid' };
+  }
+  if (data.brand !== undefined && data.brand && data.brand.length > MAX_FIELD_LENGTH) {
+    return { success: false, error: 'brandTooLong' };
+  }
+  if (data.model !== undefined && data.model && data.model.length > MAX_FIELD_LENGTH) {
+    return { success: false, error: 'modelTooLong' };
+  }
+  if (data.year !== undefined && data.year && (data.year < 1900 || data.year > new Date().getFullYear() + 1)) {
+    return { success: false, error: 'yearInvalid' };
+  }
+  if (data.energy_type !== undefined && data.energy_type && !['electrique', 'gaz', 'manuel', 'mixte'].includes(data.energy_type)) {
+    return { success: false, error: 'energyTypeInvalid' };
+  }
+  if (data.delivery_type !== undefined && data.delivery_type && !['sur_place', 'livraison', 'livraison_nationale'].includes(data.delivery_type)) {
+    return { success: false, error: 'deliveryTypeInvalid' };
+  }
+  if (data.cuisine_type !== undefined && data.cuisine_type && !CUISINE_TYPE_VALUES.includes(data.cuisine_type)) {
+    return { success: false, error: 'cuisineTypeInvalid' };
+  }
+
   const updateData: Record<string, unknown> = {};
   if (data.title !== undefined) updateData.title = data.title.trim();
   if (data.description !== undefined) updateData.description = data.description.trim();
@@ -214,7 +268,7 @@ export async function updateListing(
     .eq('id', existing.id);
 
   if (error) {
-    console.error('Error updating listing:', error);
+    console.error('Error updating listing:', error.code, error.message);
     return { success: false, error: 'updateError' };
   }
 
@@ -243,7 +297,7 @@ export async function deleteListing(
     .eq('id', existing.id);
 
   if (error) {
-    console.error('Error deleting listing:', error);
+    console.error('Error deleting listing:', error.code, error.message);
     return { success: false, error: 'deleteError' };
   }
 
@@ -274,7 +328,7 @@ export async function markListingAsSold(
     .eq('id', existing.id);
 
   if (error) {
-    console.error('Error marking listing as sold:', error);
+    console.error('Error marking listing as sold:', error.code, error.message);
     return { success: false, error: 'statusUpdateError' };
   }
 
@@ -341,7 +395,7 @@ export async function republishListing(
     .eq('id', existing.id);
 
   if (error) {
-    console.error('Error republishing listing:', error);
+    console.error('Error republishing listing:', error.code, error.message);
     return { success: false, error: 'republishError' };
   }
 
@@ -359,21 +413,12 @@ export async function incrementListingViews(
 // Admin actions
 export async function adminUpdateListingStatus(
   listingId: string,
-  status: 'active' | 'deleted' | 'sold',
-  adminId: string
+  status: 'active' | 'deleted' | 'sold'
 ): Promise<{ success: boolean; error?: string }> {
+  const adminId = await requireAdmin();
+  if (!adminId) return { success: false, error: 'unauthorized' };
+
   const supabase = createAdminClient();
-
-  // Verify the caller is actually an admin before proceeding
-  const { data: admin } = await supabase
-    .from('admin_users')
-    .select('id')
-    .eq('id', adminId)
-    .single();
-
-  if (!admin) {
-    return { success: false, error: 'unauthorized' };
-  }
 
   const { error: updateError } = await supabase
     .from('listings')
@@ -390,25 +435,23 @@ export async function adminUpdateListingStatus(
     action: status === 'deleted' ? 'deleted' : 'approved',
     admin_id: adminId,
   }).then(({ error: logError }) => {
-    if (logError) console.error('Error logging moderation action:', logError);
+    if (logError) console.error('Error logging moderation:', logError.code, logError.message);
   });
 
   return { success: true };
 }
 
-// Check if a user is an admin (uses admin client to bypass RLS)
-export async function checkIsAdmin(userId: string): Promise<boolean> {
-  const supabase = createAdminClient();
-  const { data } = await supabase
-    .from('admin_users')
-    .select('id')
-    .eq('id', userId)
-    .single();
-  return !!data;
+// Check if the current session user is an admin
+export async function checkIsAdmin(): Promise<boolean> {
+  const adminId = await requireAdmin();
+  return !!adminId;
 }
 
-// Fetch all listings for admin dashboard (uses admin client to bypass RLS)
+// Fetch all listings for admin dashboard (requires admin session)
 export async function adminFetchListings(): Promise<Listing[]> {
+  const adminId = await requireAdmin();
+  if (!adminId) return [];
+
   const supabase = createAdminClient();
   const { data } = await supabase
     .from('listings')
@@ -440,9 +483,11 @@ export async function fetchListingByToken(token: string): Promise<Listing | null
 
 // Delete a listing by ID — for authenticated users deleting their own listings
 export async function deleteUserListing(
-  listingId: string,
-  userId: string
+  listingId: string
 ): Promise<{ success: boolean; error?: string }> {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return { success: false, error: 'unauthorized' };
+
   const supabase = createAdminClient();
 
   const { data: existing } = await supabase
@@ -463,7 +508,7 @@ export async function deleteUserListing(
     .eq('id', existing.id);
 
   if (error) {
-    console.error('Error deleting user listing:', error);
+    console.error('Error deleting user listing:', error.code, error.message);
     return { success: false, error: 'deleteError' };
   }
 

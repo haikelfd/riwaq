@@ -19,7 +19,7 @@ CREATE TABLE categories (
 CREATE TABLE locations (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   name TEXT NOT NULL,
-  name_ar TEXT NOT NULL,
+  name_ar TEXT N  OT NULL,
   slug TEXT NOT NULL UNIQUE
 );
 
@@ -338,30 +338,28 @@ INSERT INTO locations (name, name_ar, slug) VALUES
 -- SECURITY MIGRATION: Run this in Supabase SQL Editor
 -- Hides management_token from public API access
 -- ============================================================
---
+
 -- Step 1: Revoke column-level access to management_token
 -- This prevents the anon and authenticated roles from reading
 -- management_token via the REST API, even with select=*
---
--- REVOKE SELECT (management_token) ON listings FROM anon, authenticated;
--- REVOKE SELECT (management_token) ON sellers FROM anon, authenticated;
---
+REVOKE SELECT (management_token) ON listings FROM anon, authenticated;
+REVOKE SELECT (management_token) ON sellers FROM anon, authenticated;
+
 -- Step 2: Replace overly-permissive UPDATE/DELETE policies
 -- These policies use USING(true) which is redundant since
 -- the service role bypasses RLS anyway. Drop them to reduce
 -- attack surface if service role key is ever compromised.
---
--- DROP POLICY IF EXISTS "Listings can be updated via service role" ON listings;
--- DROP POLICY IF EXISTS "Listings can be deleted via service role" ON listings;
--- DROP POLICY IF EXISTS "Sellers can be updated via service role" ON sellers;
---
+DROP POLICY IF EXISTS "Listings can be updated via service role" ON listings;
+DROP POLICY IF EXISTS "Listings can be deleted via service role" ON listings;
+DROP POLICY IF EXISTS "Sellers can be updated via service role" ON sellers;
+
 -- Step 3: Lock down admin_users INSERT (prevent self-registration)
--- By default there's no INSERT policy so anon can't insert,
--- but explicitly deny for safety:
---
--- CREATE POLICY "No public insert on admin_users" ON admin_users
---   FOR INSERT WITH CHECK (false);
---
+CREATE POLICY "No public insert on admin_users" ON admin_users
+  FOR INSERT WITH CHECK (false);
+
+-- Step 4: Restrict listing_reports access
+DROP POLICY IF EXISTS "Reports are viewable by everyone" ON listing_reports;
+DROP POLICY IF EXISTS "Reports can be updated" ON listing_reports;
 -- ============================================================
 -- MIGRATION: Add delivery_type to listings
 -- ============================================================

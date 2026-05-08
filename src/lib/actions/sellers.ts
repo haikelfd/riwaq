@@ -33,7 +33,7 @@ export async function createSeller(data: CreateSellerData): Promise<{
     .single();
 
   if (error) {
-    console.error('Error creating seller:', error);
+    console.error('Error creating seller:', error.code, error.message);
     return { success: false, error: 'sellerCreateError' };
   }
 
@@ -60,6 +60,17 @@ export async function updateSeller(
     return { success: false, error: 'sellerNotFound' };
   }
 
+  // Validate update fields (same rules as createSeller)
+  if (data.full_name !== undefined && (!data.full_name.trim() || data.full_name.trim().length > 100)) {
+    return { success: false, error: 'sellerNameInvalid' };
+  }
+  if (data.phone !== undefined && (!data.phone.trim() || data.phone.replace(/\D/g, '').length < 8)) {
+    return { success: false, error: 'sellerPhoneInvalid' };
+  }
+  if (data.email !== undefined && data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    return { success: false, error: 'sellerEmailInvalid' };
+  }
+
   const updateData: Record<string, unknown> = {};
   if (data.full_name !== undefined) updateData.full_name = data.full_name.trim();
   if (data.phone !== undefined) updateData.phone = data.phone.trim();
@@ -71,7 +82,7 @@ export async function updateSeller(
     .eq('id', existing.id);
 
   if (error) {
-    console.error('Error updating seller:', error);
+    console.error('Error updating seller:', error.code, error.message);
     return { success: false, error: 'sellerUpdateError' };
   }
 

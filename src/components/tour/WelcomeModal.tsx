@@ -32,7 +32,7 @@ export default function WelcomeModal() {
     setVisible(false);
     setDismissed(true);
     if (user?.id) {
-      await markTourAsSeen(user.id);
+      await markTourAsSeen();
     }
   };
 

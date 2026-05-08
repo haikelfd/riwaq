@@ -10,7 +10,7 @@ export async function getCategories(): Promise<Category[]> {
     .order('sort_order', { ascending: true });
 
   if (error) {
-    console.error('Error fetching categories:', error);
+    console.error('Error fetching categories:', error.code, error.message);
     return [];
   }
 
@@ -27,7 +27,7 @@ export async function getLocations(): Promise<Location[]> {
     .order('name', { ascending: true });
 
   if (error) {
-    console.error('Error fetching locations:', error);
+    console.error('Error fetching locations:', error.code, error.message);
     return [];
   }
 
@@ -62,7 +62,7 @@ export async function getSubcategories(categoryId: string): Promise<Subcategory[
     .order('sort_order', { ascending: true });
 
   if (error) {
-    console.error('Error fetching subcategories:', error);
+    console.error('Error fetching subcategories:', error.code, error.message);
     return [];
   }
 
@@ -79,7 +79,7 @@ export async function getAllSubcategories(): Promise<Subcategory[]> {
     .order('sort_order', { ascending: true });
 
   if (error) {
-    console.error('Error fetching all subcategories:', error);
+    console.error('Error fetching all subcategories:', error.code, error.message);
     return [];
   }
 

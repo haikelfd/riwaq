@@ -79,7 +79,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
   const markSeen = useCallback(async () => {
     if (user?.id) {
-      await markTourAsSeen(user.id);
+      await markTourAsSeen();
     }
   }, [user]);
 

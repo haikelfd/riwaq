@@ -40,7 +40,7 @@ export default function AdminDashboard() {
 
     async function init() {
       try {
-        const admin = await checkIsAdmin(user!.id);
+        const admin = await checkIsAdmin();
         if (!admin) {
           router.push('/admin/login');
           return;
@@ -70,7 +70,7 @@ export default function AdminDashboard() {
     setActionError('');
     setSuccessMessage('');
     try {
-      const result = await adminUpdateListingStatus(listingId, status, user.id);
+      const result = await adminUpdateListingStatus(listingId, status);
       if (result.success) {
         const data = await adminFetchListings();
         setListings(data);
@@ -90,7 +90,7 @@ export default function AdminDashboard() {
     setActionError('');
     setSuccessMessage('');
     try {
-      const result = await adminResolveReport(reportId, action, user.id);
+      const result = await adminResolveReport(reportId, action);
       if (result.success) {
         const data = await adminFetchReports();
         setReports(data);

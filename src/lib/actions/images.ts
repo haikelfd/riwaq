@@ -31,6 +31,17 @@ export async function uploadListingImage(
   if (!ALLOWED_EXTENSIONS.includes(ext)) {
     return { success: false, error: 'Extension non autorisée.' };
   }
+
+  // Validate file magic numbers to prevent spoofed MIME types
+  const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const isJPEG = bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF;
+  const isPNG = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47;
+  const isGIF = bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46;
+  const isWEBP = bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46
+    && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
+  if (!isJPEG && !isPNG && !isGIF && !isWEBP) {
+    return { success: false, error: 'Le contenu du fichier ne correspond pas à un format image valide.' };
+  }
   const fileName = `${listingId}/${uuidv4()}.${ext}`;
 
   const { error: uploadError } = await supabase.storage
@@ -41,7 +52,7 @@ export async function uploadListingImage(
     });
 
   if (uploadError) {
-    console.error('Error uploading image:', uploadError);
+    console.error('Error uploading image:', uploadError.message);
     return { success: false, error: 'Erreur lors du téléchargement de l\'image.' };
   }
 
@@ -53,7 +64,7 @@ export async function uploadListingImage(
   });
 
   if (dbError) {
-    console.error('Error saving image reference:', dbError);
+    console.error('Error saving image reference:', dbError.code, dbError.message);
     return { success: false, error: 'Erreur lors de l\'enregistrement de l\'image.' };
   }
 
@@ -77,7 +88,7 @@ export async function deleteListingImage(
     .remove([storagePath]);
 
   if (storageError) {
-    console.error('Error deleting image from storage:', storageError);
+    console.error('Error deleting image from storage:', storageError.message);
   }
 
   // Delete from DB
@@ -87,7 +98,7 @@ export async function deleteListingImage(
     .eq('id', imageId);
 
   if (dbError) {
-    console.error('Error deleting image record:', dbError);
+    console.error('Error deleting image record:', dbError.code, dbError.message);
     return { success: false, error: 'Erreur lors de la suppression de l\'image.' };
   }
 

@@ -12,7 +12,7 @@ export async function getListingsByUserId(userId: string): Promise<Listing[]> {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching user listings:', error);
+    console.error('Error fetching user listings:', error.code, error.message);
     return [];
   }
 

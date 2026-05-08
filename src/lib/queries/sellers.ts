@@ -12,7 +12,7 @@ export async function getSellerById(id: string): Promise<Seller | null> {
     .single();
 
   if (error) {
-    console.error('Error fetching seller:', error);
+    console.error('Error fetching seller:', error.code, error.message);
     return null;
   }
 
@@ -30,7 +30,7 @@ export async function getSellerByToken(token: string): Promise<Seller | null> {
     .single();
 
   if (error) {
-    console.error('Error fetching seller by token:', error);
+    console.error('Error fetching seller by token:', error.code, error.message);
     return null;
   }
 
@@ -56,7 +56,7 @@ export async function getListingsBySellerId(sellerId: string): Promise<Listing[]
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching seller listings:', error);
+    console.error('Error fetching seller listings:', error.code, error.message);
     return [];
   }
 

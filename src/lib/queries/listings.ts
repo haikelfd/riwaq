@@ -75,13 +75,15 @@ export async function getListings(filters: ListingFilters = {}): Promise<{
   const { data, count, error } = await query;
 
   if (error) {
-    console.error('Error fetching listings:', error);
+    console.error('Error fetching listings:', error.code, error.message);
     return { listings: [], total: 0 };
   }
 
   // Fallback: if full-text search returned 0 results, try fuzzy ilike search
   if (filters.search && (!data || data.length === 0)) {
-    const term = `%${filters.search}%`;
+    // Sanitize search input: escape PostgREST filter special characters
+    const sanitized = filters.search.replace(/[,.()"\\]/g, '');
+    const term = `%${sanitized}%`;
     let fuzzyQuery = supabase
       .from('listings')
       .select(selectClause, { count: 'exact' })
@@ -177,7 +179,7 @@ export async function getListingById(id: string): Promise<Listing | null> {
     .single();
 
   if (error) {
-    console.error('Error fetching listing:', error, '| id:', id);
+    console.error('Error fetching listing:', error.code, error.message);
     return null;
   }
 
@@ -201,7 +203,7 @@ export async function getListingByToken(token: string): Promise<Listing | null> 
     .single();
 
   if (error) {
-    console.error('Error fetching listing by token:', error);
+    console.error('Error fetching listing by token:', error.code, error.message);
     return null;
   }
 
@@ -227,7 +229,7 @@ export async function getListingsByIds(ids: string[]): Promise<Listing[]> {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching listings by ids:', error);
+    console.error('Error fetching listings by ids:', error.code, error.message);
     return [];
   }
 
@@ -251,7 +253,7 @@ export async function getLatestListings(limit = 6): Promise<Listing[]> {
     .limit(limit);
 
   if (error) {
-    console.error('Error fetching latest listings:', error);
+    console.error('Error fetching latest listings:', error.code, error.message);
     return [];
   }
 

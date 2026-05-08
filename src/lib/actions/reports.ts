@@ -1,7 +1,21 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { ReportReason, ListingReport } from '@/lib/types';
+
+async function requireAdmin(): Promise<string | null> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from('admin_users')
+    .select('id')
+    .eq('id', user.id)
+    .single();
+  return data ? user.id : null;
+}
 
 const VALID_REASONS: ReportReason[] = [
   'photos_misleading', 'seller_unresponsive', 'already_sold',
@@ -61,7 +75,7 @@ export async function reportListing(data: {
     });
 
   if (error) {
-    console.error('Error creating report:', error);
+    console.error('Error creating report:', error.code, error.message);
     return { success: false, error: 'reportError' };
   }
 
@@ -69,6 +83,9 @@ export async function reportListing(data: {
 }
 
 export async function adminFetchReports(): Promise<ListingReport[]> {
+  const adminId = await requireAdmin();
+  if (!adminId) return [];
+
   const supabase = createAdminClient();
   const { data } = await supabase
     .from('listing_reports')
@@ -80,21 +97,12 @@ export async function adminFetchReports(): Promise<ListingReport[]> {
 
 export async function adminResolveReport(
   reportId: string,
-  action: 'reviewed' | 'dismissed',
-  adminId: string
+  action: 'reviewed' | 'dismissed'
 ): Promise<{ success: boolean; error?: string }> {
+  const adminId = await requireAdmin();
+  if (!adminId) return { success: false, error: 'unauthorized' };
+
   const supabase = createAdminClient();
-
-  // Verify admin
-  const { data: admin } = await supabase
-    .from('admin_users')
-    .select('id')
-    .eq('id', adminId)
-    .single();
-
-  if (!admin) {
-    return { success: false, error: 'unauthorized' };
-  }
 
   const { error } = await supabase
     .from('listing_reports')

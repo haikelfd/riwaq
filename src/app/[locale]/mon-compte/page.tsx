@@ -72,7 +72,7 @@ export default function AccountPage() {
     setSaving(true);
     setMessage('');
 
-    const result = await updateProfile(user.id, { full_name: nameInput });
+    const result = await updateProfile({ full_name: nameInput });
     if (result.success) {
       setMessage(t('profileUpdated'));
       setEditing(false);
@@ -85,7 +85,7 @@ export default function AccountPage() {
     if (!user) return;
     if (!confirm(t('deleteConfirm'))) return;
 
-    const result = await deleteUserListing(listingId, user.id);
+    const result = await deleteUserListing(listingId);
     if (result.success) {
       setListings((prev) => prev.filter((l) => l.id !== listingId));
     }
